@@ -45,6 +45,8 @@ void* my_malloc(size_t size) {
   return NULL;
 }
 
+// This doesn't work, it doesn't try to reloacate the memory
+// Nor does it preserve the data.
 void* my_realloc(void* ptr, size_t size) {
   if (ptr == NULL) {
     return NULL;
@@ -57,7 +59,7 @@ void* my_realloc(void* ptr, size_t size) {
   MemoryBlock* block = (MemoryBlock*)(ptr);
   block->size = size;
 
-  return NULL;
+  return ptr;
 }
 
 void* my_free(void* ptr) {
