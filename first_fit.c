@@ -36,26 +36,13 @@ void* cool_malloc(size_t size) {
 
   MemoryBlock* current = free_list;
   while (current) {
-    // printf("NEW MALLOC LOOP\n");
-    // printf("given size: %zu\n", size);
-    // printf("current: %d\n", byte_index(current));
-    // printf("current->is_free: %d\n", current->is_free);
-    // printf("current->size: %zu\n", current->size);
-    // printf("current->next: %d\n", byte_index(current->next));
-    // printf("current->prev: %d\n", byte_index(current->prev));
     if (current->is_free) {
       current = combine_surrounding_space(current);
-
-      // printf("current->size: %zu\n", current->size);
-      // printf("size: %zu\n", size);
-      // printf("current->size >= size: %d\n", current->size >= size);
       if (current->size >= size) {
         current->is_free = 0;
         current->size = size;
 
         // If there is space for a memory block
-        // printf("current: %d\n", byte_index(current));
-        // printf("current->next: %d\n", byte_index(current->next));
         size_t space_between_current_and_next = space_between_blocks(current, current->next);
         if (space_between_current_and_next > sizeof(MemoryBlock)) {
           // Create a new free memory block
@@ -65,15 +52,9 @@ void* cool_malloc(size_t size) {
           MemoryBlock* next_block = next_byte(current);
           next_block->next = current->next;
           next_block->prev = current;
-          // printf("next_block %d\n", byte_index(next_block));
-          // printf("next_block->next %d\n", byte_index(next_block->next));
           next_block->size = space_between_current_and_next - sizeof(MemoryBlock);
           next_block->is_free = 1;
           current->next = next_block;
-          // printf("next_block: %d\n", byte_index(next_block));
-          // printf("next_block->next: %d\n", byte_index(next_block->next));
-          // printf("next_block->size: %zu\n", next_block->size);
-          // printf("created new block: %d\n", byte_index(next_block));
         }
 
         return (void*)(current + 1);
@@ -97,7 +78,7 @@ void* cool_free(void* ptr) {
 }
 
 void* cool_realloc(void* ptr, size_t size) {
-  if (size == 0 || ptr == NULL) {
+  if (ptr == NULL || size == 0) {
     return NULL;
   }
 
@@ -107,13 +88,11 @@ void* cool_realloc(void* ptr, size_t size) {
   MemoryBlock* moved_block = combine_surrounding_space(block);
 
   if (moved_block->size >= size) {
-    printf("in moved_block->size >= size\n");
     moved_block->size = size;
     return (void*)(moved_block + 1);
   } else {
-    printf("in here");
     // This won't work with concurrency
-    cool_free(moved_block);
+    cool_free((moved_block + 1));
     void* new_ptr = cool_malloc(size);
 
     if (new_ptr == NULL) {
@@ -136,7 +115,7 @@ int byte_index(void* ptr) {
 }
 
 void* last_byte() {
-  return (void*)((char*)free_list + MEMORY_POOL_SIZE - 1);
+  return (void*)((char*)free_list + MEMORY_POOL_SIZE);
 }
 
 void* next_byte(MemoryBlock* block) {
@@ -144,11 +123,7 @@ void* next_byte(MemoryBlock* block) {
 }
 
 size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b) {
-  // printf("SPACE BETWEEN BLOCKS\n");
   char* start_location = (char*)(next_byte(a));
-
-  // printf("SBB start_location: %d\n", byte_index(start_location));
-  // printf("SBB last_byte: %p\n", last_byte());
 
   if (start_location >= (char*)last_byte()) {
     return 0;
@@ -156,18 +131,11 @@ size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b) {
 
   char* end_location;
 
-  // printf("SBB: b == NULL %d\n", b == NULL);
-
   if (b == NULL) {
     end_location = last_byte();
-    // printf("SBB end_location: %d\n", byte_index(end_location));
-    // printf("SBB result: %zu\n", (size_t)(end_location - start_location));
   } else {
     end_location = (char*)b;
   }
-
-  // printf("SBB end_location: %p\n", end_location);
-  // printf("SBB result: %zu\n", (size_t)(end_location - start_location)); 
 
   return (size_t)(end_location - start_location);
 }

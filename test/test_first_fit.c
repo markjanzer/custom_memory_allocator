@@ -63,6 +63,19 @@ void test_WhenPassedMultipleLargeSizes(void) {
   TEST_ASSERT_NULL(ptr2);
 }
 
+void test_malloc_ItCanSplitMemoryIntoQuarters(void) {
+  size_t quarter = (MEMORY_POOL_SIZE / 4) - sizeof(MemoryBlock);
+  void* ptr1 = cool_malloc(quarter);
+  void* ptr2 = cool_malloc(quarter);
+  void* ptr3 = cool_malloc(quarter);
+  void* ptr4 = cool_malloc(quarter);
+
+  TEST_ASSERT_NOT_NULL(ptr1);
+  TEST_ASSERT_NOT_NULL(ptr2);
+  TEST_ASSERT_NOT_NULL(ptr3);
+  TEST_ASSERT_NOT_NULL(ptr4);
+}
+
 void test_WouldFitExceptForMemoryBlock(void) {
   size_t size = MEMORY_POOL_SIZE - sizeof(MemoryBlock) + 1;
   char* ptr1 = (char*)cool_malloc(size);
@@ -122,6 +135,16 @@ void test_realloc_ItChangesSize(void) {
   TEST_ASSERT_EQUAL(block->size, new_size);
 }
 
+void test_realloc_ItWorksWhenExistingBlockSpaceIsntLargeEnough(void) {
+  size_t quarter = (MEMORY_POOL_SIZE / 4) - sizeof(MemoryBlock);
+  void* ptr1 = cool_malloc(quarter);
+  void* ptr2 = cool_malloc(quarter);
+
+  void* ptr3 = cool_realloc(ptr1, quarter * 2);
+
+  TEST_ASSERT_NOT_NULL(ptr3);
+}
+
 void test_realloc_ItCompactsAndExpandsBackwards(void) {
   size_t quarter = (MEMORY_POOL_SIZE / 4) - sizeof(MemoryBlock);
   void* ptr1 = cool_malloc(quarter);
@@ -139,16 +162,16 @@ void test_realloc_ItCompactsAndExpandsBackwards(void) {
 
 // Combining blocks
 
-void test_scenario_ItMakesSpaceByCombiningBlocks(void) {
-  size_t quarter = MEMORY_POOL_SIZE / 4;
-  size_t half = MEMORY_POOL_SIZE / 2;
+void test_scenario_ItMakesSpaceByCombiningFreeBlocks(void) {
+  size_t quarter = MEMORY_POOL_SIZE / 4 - sizeof(MemoryBlock);
+  size_t half = MEMORY_POOL_SIZE / 2 - sizeof(MemoryBlock);
   void* ptr1 = cool_malloc(quarter);
   void* ptr2 = cool_malloc(quarter);
   void* ptr3 = cool_malloc(quarter);
   void* ptr4 = cool_malloc(quarter);
 
   cool_free(ptr2);
-  cool_free(ptr4);
+  cool_free(ptr3);
 
   void* ptr5 = cool_malloc(half);
 
@@ -165,32 +188,34 @@ int main(void) {
   UNITY_BEGIN();
 
   // Setup
-  // RUN_TEST(test_setup_MemoryPoolLargeEnough);
-  // RUN_TEST(test_setup_MemoryPoolDivisbleByTwo);
+  RUN_TEST(test_setup_MemoryPoolLargeEnough);
+  RUN_TEST(test_setup_MemoryPoolDivisbleByTwo);
   
   // // Malloc
-  // RUN_TEST(test_WhenPassedSizeZero);
-  // RUN_TEST(test_SavesPointer);
-  // RUN_TEST(test_ItDoesNotOverwriteData);
-  // RUN_TEST(test_ItCanHaveThreeALlocations);
+  RUN_TEST(test_WhenPassedSizeZero);
+  RUN_TEST(test_SavesPointer);
+  RUN_TEST(test_ItDoesNotOverwriteData);
+  RUN_TEST(test_ItCanHaveThreeALlocations);
 
-  // RUN_TEST(test_WhenPassedSizeOfMemoryPool);
-  // RUN_TEST(test_WhenPassedMultipleLargeSizes);
-  // RUN_TEST(test_WouldFitExceptForMemoryBlock);
-  // RUN_TEST(test_WhenSizeFitsExactly);
+  RUN_TEST(test_WhenPassedSizeOfMemoryPool);
+  RUN_TEST(test_WhenPassedMultipleLargeSizes);
+  RUN_TEST(test_malloc_ItCanSplitMemoryIntoQuarters);
+  RUN_TEST(test_WouldFitExceptForMemoryBlock);
+  RUN_TEST(test_WhenSizeFitsExactly);
 
   // // Free
-  // RUN_TEST(test_free_ItAllowsTheSpaceToBeUsed);
-  // RUN_TEST(test_free_ItReusesThePointer);
+  RUN_TEST(test_free_ItAllowsTheSpaceToBeUsed);
+  RUN_TEST(test_free_ItReusesThePointer);
 
   // // Realloc
-  // RUN_TEST(test_realloc_IfPassedNil_ItReturnsNil);
-  // RUN_TEST(test_realloc_IfPassedZero_ItReturnsNil);
-  // RUN_TEST(test_realloc_ItChangesSize);
+  RUN_TEST(test_realloc_IfPassedNil_ItReturnsNil);
+  RUN_TEST(test_realloc_IfPassedZero_ItReturnsNil);
+  RUN_TEST(test_realloc_ItChangesSize);
+  RUN_TEST(test_realloc_ItWorksWhenExistingBlockSpaceIsntLargeEnough);
   RUN_TEST(test_realloc_ItCompactsAndExpandsBackwards);
 
   // Tricky scenarios
-  RUN_TEST(test_scenario_ItMakesSpaceByCombiningBlocks);
+  RUN_TEST(test_scenario_ItMakesSpaceByCombiningFreeBlocks);
 
   return UNITY_END();
 }
