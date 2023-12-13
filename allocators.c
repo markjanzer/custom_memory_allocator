@@ -16,6 +16,7 @@ static MemoryBlock* combine_surrounding_space(MemoryBlock* block);
 static void create_block_if_space_after(MemoryBlock* block);
 static void create_memory_block_after(MemoryBlock* block, size_t size);
 static void initialize_memory_block(MemoryBlock* block, size_t size, int is_free, MemoryBlock* prev, MemoryBlock* next);
+static void allocate_to(MemoryBlock* block, size_t size);
 static int byte_index(void* ptr);
 static void print_memory_block(MemoryBlock* block);
 
@@ -60,11 +61,7 @@ void* cool_malloc(size_t size) {
     if (current->is_free) {
       current = combine_surrounding_space(current);
       if (current->size >= size) {
-        current->is_free = 0;
-        current->size = size;
-
-        create_block_if_space_after(current);
-
+        allocate_to(current, size);
         return (void*)(current + 1);
       }
     }
@@ -91,23 +88,21 @@ void* cool_realloc(void* ptr, size_t size) {
   }
 
   MemoryBlock* block = ((MemoryBlock*)ptr) - 1;
+  size_t bytes_to_copy = true_size(block);
 
-  size_t old_size = block->size;
   MemoryBlock* moved_block = combine_surrounding_space(block);
 
   if (moved_block->size >= size) {
-    moved_block->size = size;
+    allocate_to(moved_block, size);
     return (void*)(moved_block + 1);
   } else {
-    // This won't work with concurrency
-    cool_free((moved_block + 1));
     void* new_ptr = cool_malloc(size);
 
     if (new_ptr == NULL) {
       return NULL;
     }
 
-    memmove(moved_block, (void*)((MemoryBlock*)(new_ptr) - 1), old_size);
+    memmove(moved_block, (void*)((MemoryBlock*)(new_ptr) - 1), bytes_to_copy);
     return new_ptr;
   }
 }
@@ -200,6 +195,14 @@ static void initialize_memory_block(MemoryBlock* block, size_t size, int is_free
   block->prev = prev;
   block->next = next;
 }
+
+static void allocate_to(MemoryBlock* block, size_t size) {
+  block->is_free = 0;
+  block->size = size;
+
+  create_block_if_space_after(block);
+}
+
 
 // Private functions for debugging
 static void print_memory_block(MemoryBlock* block) {
