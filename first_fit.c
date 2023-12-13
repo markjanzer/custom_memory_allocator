@@ -6,7 +6,7 @@
 #include "first_fit.h"
 
 // Functions
-static void* last_byte();
+static void* byte_after_memory_pool();
 static void* next_byte(MemoryBlock* block);
 static size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b);
 static size_t true_size(MemoryBlock* block);
@@ -113,7 +113,8 @@ void* cool_realloc(void* ptr, size_t size) {
 }
 
 // Private functions
-static void* last_byte() {
+
+static void* byte_after_memory_pool() {
   return (void*)((char*)first_block + memory_pool_size);
 }
 
@@ -121,19 +122,19 @@ static void* next_byte(MemoryBlock* block) {
   return (char*)(block + 1) + block->size;
 }
 
-static size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b) {
-  char* start_location = (char*)(next_byte(a));
+static size_t space_between_blocks(MemoryBlock* block1, MemoryBlock* block2) {
+  void* start_location = next_byte(block1);
 
-  if (start_location >= (char*)last_byte()) {
+  if (start_location >= byte_after_memory_pool()) {
     return 0;
   }
 
-  char* end_location;
+  void* end_location;
 
-  if (b == NULL) {
-    end_location = last_byte();
+  if (block2 == NULL) {
+    end_location = byte_after_memory_pool();
   } else {
-    end_location = (char*)b;
+    end_location = (void*)block2;
   }
 
   return (size_t)(end_location - start_location);
@@ -159,16 +160,16 @@ static void combine_b_into_a(MemoryBlock* block_a, MemoryBlock* block_b) {
 }
 
 static MemoryBlock* combine_surrounding_space(MemoryBlock* block) {
-  // Expand block forward if there is space
+  // Expand block to earlier byte if there is space
   if (block->prev && space_between_blocks(block->prev, block)) {
     block = expand_back_to(block, next_byte(block->prev));
   }
 
   // Merge with next blocks if free
   while (block->next && block->next->is_free) {
-    // Expand next block foward 
+    // Expand free block to byte after current
     if (space_between_blocks(block, block->next)) {
-      expand_back_to(block->next, next_byte(block));
+      block->next = expand_back_to(block->next, next_byte(block));
     }
 
     // Merge next block into current
