@@ -1,4 +1,4 @@
-# *.o
-# *.exe
-# *.out
-# /test/test_first_fit
+*.o
+*.exe
+*.out
+/test/test_first_fit
