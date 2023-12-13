@@ -2,7 +2,6 @@
 #define FIRST_FIT_H
 
 #include <stdlib.h>
-#include <stddef.h>
 
 typedef struct MemoryBlock {
     size_t size;
