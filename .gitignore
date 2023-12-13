@@ -1,4 +1,4 @@
 *.o
 *.exe
 *.out
-/test/allocators
+/test/test_allocators
