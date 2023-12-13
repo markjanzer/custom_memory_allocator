@@ -14,20 +14,20 @@ gcc -o your_program your_program.c allocators.c
 #include "allocators.h"
 
 int main() {
-    initialize_memory_pool(1024 * 1024); // Specify the number of bytes you want allocated
-    void* block1 = cool_malloc(1024); // Allocate memory
-    void* block1 = cool_realloc(block1, 2048)
+  initialize_memory_pool(1024 * 1024); // Specify the number of bytes you want allocated
+  void* my_block = cool_malloc(1024); // Allocate memory
+  my_block = cool_realloc(my_block, 2048); // Reallocate
 
-    // Your code here
+  // Your code here
 
-    cool_free(my_block); // Free memory
+  cool_free(my_block); // Free memory
 
-    free_memory_pool(); // Free pool when done
+  free_memory_pool(); // Free pool when done
 }
 ```
 
 ## Strategy
-The allocators in this project use a first fit strategy, as well as a large amount of shuffling and reshuffling.
+The allocators in this project use a first fit strategy. Compaction and coalescing are done on `malloc` and `realloc` to ensure space is used efficiently.
 
 When the memory pool is first initialized, one block is created that encapsulates the entire span of the memory pool.
 
