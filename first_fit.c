@@ -113,7 +113,6 @@ void* cool_realloc(void* ptr, size_t size) {
 }
 
 // Private functions
-
 static void* byte_after_memory_pool() {
   return (void*)((char*)first_block + memory_pool_size);
 }

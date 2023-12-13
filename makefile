@@ -1,4 +1,4 @@
-test_first_fit:
+test:
 	gcc -o test/test_first_fit test/test_first_fit.c first_fit.c test/unity/unity.c
 
 .PHONY: clean
