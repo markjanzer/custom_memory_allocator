@@ -1,5 +1,5 @@
-#ifndef FIRST_FIT_H
-#define FIRST_FIT_H
+#ifndef ALLOCATORS_H
+#define ALLOCATORS_H
 
 #include <stdlib.h>
 
@@ -16,4 +16,4 @@ void* cool_malloc(size_t size);
 void* cool_free(void* ptr);
 void* cool_realloc(void* ptr, size_t size);
 
-#endif // FIRST_FIT_H
+#endif // ALLOCATORS_H
