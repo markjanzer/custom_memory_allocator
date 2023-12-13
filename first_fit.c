@@ -14,27 +14,41 @@ static void* last_byte();
 static int byte_index(void* ptr);
 static void* create_memory_block_after(MemoryBlock* block, size_t size);
 
-unsigned char memory_pool[MEMORY_POOL_SIZE];
-MemoryBlock* free_list = NULL;
+static unsigned char* memory_pool = NULL;  // Dynamic memory pool
+static MemoryBlock* first_block = NULL;      // Free list head
+static size_t memory_pool_size = 0;   
 
-void initialize_memory_pool() {
-  free_list = (MemoryBlock*)memory_pool;
-  free_list->size = MEMORY_POOL_SIZE - sizeof(MemoryBlock);
-  free_list->is_free = 1;
-  free_list->next = NULL;
-  free_list->prev = NULL;
+void* initialize_memory_pool(size_t size) {
+  if (memory_pool != NULL) {
+    free_memory_pool();
+  }
+
+  memory_pool = malloc(size);
+  memory_pool_size = size;
+
+  first_block = (MemoryBlock*)memory_pool;
+  first_block->size = size - sizeof(MemoryBlock);
+  first_block->is_free = 1;
+  first_block->next = NULL;
+  first_block->prev = NULL;
+
+  return NULL;
 }
 
-// I want to implement these
-// void* first_byte = free_list;
-// void* last_byte = (char*)free_list + MEMORY_POOL_SIZE - 1;
+void* free_memory_pool() {
+  free(memory_pool);
+  memory_pool = NULL;
+  first_block = NULL;
+  memory_pool_size = 0;
+  return NULL;
+}
 
 void* cool_malloc(size_t size) {
   if (size == 0) {
     return NULL;
   }
 
-  MemoryBlock* current = free_list;
+  MemoryBlock* current = first_block;
   while (current) {
     if (current->is_free) {
       current = combine_surrounding_space(current);
@@ -98,11 +112,11 @@ void* cool_realloc(void* ptr, size_t size) {
 
 // HELPER FUNCTIONS
 static int byte_index(void* ptr) {
-  return (char*)ptr - (char*)free_list;
+  return (char*)ptr - (char*)first_block;
 }
 
 static void* last_byte() {
-  return (void*)((char*)free_list + MEMORY_POOL_SIZE);
+  return (void*)((char*)first_block + memory_pool_size);
 }
 
 void* next_byte(MemoryBlock* block) {

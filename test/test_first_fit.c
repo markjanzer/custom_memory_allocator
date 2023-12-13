@@ -1,18 +1,23 @@
 #include "unity/unity.h"
 #include "../first_fit.h"
 
+size_t memory_pool_size;
+
 void setUp(void){
-  initialize_memory_pool();
+  memory_pool_size = 200;
+  initialize_memory_pool(memory_pool_size);
 }
-void tearDown(void){}
+void tearDown(void){
+  free_memory_pool();
+}
 
 // Setup
 void test_setup_MemoryPoolLargeEnough(void) {
-  TEST_ASSERT_TRUE(MEMORY_POOL_SIZE > 199);
+  TEST_ASSERT_TRUE(memory_pool_size > 199);
 }
 
 void test_setup_MemoryPoolDivisbleByTwo(void) {
-  TEST_ASSERT_EQUAL(MEMORY_POOL_SIZE % 2, 0);
+  TEST_ASSERT_EQUAL(memory_pool_size % 2, 0);
 }
 
 // cool_malloc
@@ -44,12 +49,12 @@ void test_malloc_ItCanHaveThreeALlocations(void) {
 }
 
 void test_malloc_WhenPassedSizeOfMemoryPool(void) {
-  void* ptr = cool_malloc(MEMORY_POOL_SIZE);
+  void* ptr = cool_malloc(memory_pool_size);
   TEST_ASSERT_NULL(ptr);
 }
 
 void test_malloc_WhenPassedMultipleLargeSizes(void) {
-  size_t size = (MEMORY_POOL_SIZE / 2) + 1;
+  size_t size = (memory_pool_size / 2) + 1;
   void* ptr1 = cool_malloc(size);
   void* ptr2 = cool_malloc(size);
   TEST_ASSERT_NOT_NULL(ptr1);
@@ -57,7 +62,7 @@ void test_malloc_WhenPassedMultipleLargeSizes(void) {
 }
 
 void test_malloc_ItCanSplitMemoryIntoQuarters(void) {
-  size_t quarter = (MEMORY_POOL_SIZE / 4) - sizeof(MemoryBlock);
+  size_t quarter = (memory_pool_size / 4) - sizeof(MemoryBlock);
   void* ptr1 = cool_malloc(quarter);
   void* ptr2 = cool_malloc(quarter);
   void* ptr3 = cool_malloc(quarter);
@@ -70,20 +75,20 @@ void test_malloc_ItCanSplitMemoryIntoQuarters(void) {
 }
 
 void test_malloc_WouldFitExceptForMemoryBlock(void) {
-  size_t size = MEMORY_POOL_SIZE - sizeof(MemoryBlock) + 1;
+  size_t size = memory_pool_size - sizeof(MemoryBlock) + 1;
   void* ptr1 = cool_malloc(size);
   TEST_ASSERT_NULL(ptr1);
 }
 
 void test_malloc_WhenSizeFitsExactly(void) {
-  size_t size = MEMORY_POOL_SIZE - sizeof(MemoryBlock) - 1;
+  size_t size = memory_pool_size - sizeof(MemoryBlock) - 1;
   void* ptr = cool_malloc(size);
   TEST_ASSERT_NOT_NULL(ptr);
 }
 
 void test_malloc_ItMakesSpaceByCombiningFreeBlocks(void) {
-  size_t quarter = MEMORY_POOL_SIZE / 4 - sizeof(MemoryBlock);
-  size_t half = MEMORY_POOL_SIZE / 2 - sizeof(MemoryBlock);
+  size_t quarter = memory_pool_size / 4 - sizeof(MemoryBlock);
+  size_t half = memory_pool_size / 2 - sizeof(MemoryBlock);
   void* ptr1 = cool_malloc(quarter);
   void* ptr2 = cool_malloc(quarter);
   void* ptr3 = cool_malloc(quarter);
@@ -99,7 +104,7 @@ void test_malloc_ItMakesSpaceByCombiningFreeBlocks(void) {
 
 // cool_free
 void test_free_ItAllowsTheSpaceToBeUsed(void) {
-  size_t size = MEMORY_POOL_SIZE - sizeof(MemoryBlock);
+  size_t size = memory_pool_size - sizeof(MemoryBlock);
   void* ptr = cool_malloc(size);
 
   cool_free(ptr);
@@ -109,7 +114,7 @@ void test_free_ItAllowsTheSpaceToBeUsed(void) {
 }
 
 void test_free_ItReusesThePointer(void) {
-  size_t size = MEMORY_POOL_SIZE - sizeof(MemoryBlock);
+  size_t size = memory_pool_size - sizeof(MemoryBlock);
   void* ptr = cool_malloc(size);
 
   cool_free(ptr);
@@ -134,7 +139,7 @@ void test_realloc_IfPassedZero_ItReturnsNil(void) {
 }
 
 void test_realloc_ItChangesSize(void) {
-  size_t size = MEMORY_POOL_SIZE - sizeof(MemoryBlock);
+  size_t size = memory_pool_size - sizeof(MemoryBlock);
   void* ptr = cool_malloc(size);
 
   size_t new_size = size / 2;
@@ -145,7 +150,7 @@ void test_realloc_ItChangesSize(void) {
 }
 
 void test_realloc_ItWorksWhenExistingBlockSpaceIsntLargeEnough(void) {
-  size_t quarter = (MEMORY_POOL_SIZE / 4) - sizeof(MemoryBlock);
+  size_t quarter = (memory_pool_size / 4) - sizeof(MemoryBlock);
   void* ptr1 = cool_malloc(quarter);
   void* ptr2 = cool_malloc(quarter);
 
@@ -155,7 +160,7 @@ void test_realloc_ItWorksWhenExistingBlockSpaceIsntLargeEnough(void) {
 }
 
 void test_realloc_ItCompactsAndExpandsBackwards(void) {
-  size_t quarter = (MEMORY_POOL_SIZE / 4) - sizeof(MemoryBlock);
+  size_t quarter = (memory_pool_size / 4) - sizeof(MemoryBlock);
   void* ptr1 = cool_malloc(quarter);
   void* ptr2 = cool_malloc(quarter);
   void* ptr3 = cool_malloc(quarter);
