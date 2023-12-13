@@ -6,19 +6,20 @@
 #include "first_fit.h"
 
 // Functions
-static MemoryBlock* combine_surrounding_space(MemoryBlock* block);
-static size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b);
+static void* last_byte();
 static void* next_byte(MemoryBlock* block);
+static size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b);
+static size_t true_size(MemoryBlock* block);
 static MemoryBlock* expand_back_to(MemoryBlock* block, void* new_start);
 static void combine_b_into_a(MemoryBlock* a, MemoryBlock* b);
-static void* last_byte();
-static int byte_index(void* ptr);
+static MemoryBlock* combine_surrounding_space(MemoryBlock* block);
+static void create_block_if_space_after(MemoryBlock* block);
 static void create_memory_block_after(MemoryBlock* block, size_t size);
 static void initialize_memory_block(MemoryBlock* block, size_t size, int is_free, MemoryBlock* prev, MemoryBlock* next);
-static void create_block_if_space_after(MemoryBlock* block);
+static int byte_index(void* ptr);
 static void print_memory_block(MemoryBlock* block);
 
-// Variables
+// Variables/State
 static unsigned char* memory_pool = NULL;
 static MemoryBlock* first_block = NULL;
 static size_t memory_pool_size = 0;
@@ -116,11 +117,11 @@ static void* last_byte() {
   return (void*)((char*)first_block + memory_pool_size);
 }
 
-void* next_byte(MemoryBlock* block) {
+static void* next_byte(MemoryBlock* block) {
   return (char*)(block + 1) + block->size;
 }
 
-size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b) {
+static size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b) {
   char* start_location = (char*)(next_byte(a));
 
   if (start_location >= (char*)last_byte()) {
@@ -138,7 +139,7 @@ size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b) {
   return (size_t)(end_location - start_location);
 }
 
-size_t true_size(MemoryBlock* block) {
+static size_t true_size(MemoryBlock* block) {
   return block->size + sizeof(MemoryBlock);
 }
 
@@ -200,7 +201,7 @@ static void initialize_memory_block(MemoryBlock* block, size_t size, int is_free
   block->next = next;
 }
 
-// Functions for debugging
+// Private functions for debugging
 static void print_memory_block(MemoryBlock* block) {
   printf("MemoryBlock: %p\n", block);
   printf("  size: %zu\n", block->size);
