@@ -1,7 +1,0 @@
-{
-  "files.associations": {
-    "*.css": "tailwindcss",
-    "stddef.h": "c",
-    "first_fit.h": "c"
-  }
-}

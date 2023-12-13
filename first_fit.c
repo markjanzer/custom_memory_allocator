@@ -5,14 +5,14 @@
 
 #include "first_fit.h"
 
-MemoryBlock* combine_surrounding_space(MemoryBlock* block);
-size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b);
-void* next_byte(MemoryBlock* block);
-MemoryBlock* expand_back_to(MemoryBlock* block, void* new_start);
-void combine_b_into_a(MemoryBlock* a, MemoryBlock* b);
-void* first_byte();
-void* last_byte();
-int byte_index(void* ptr);
+static MemoryBlock* combine_surrounding_space(MemoryBlock* block);
+static size_t space_between_blocks(MemoryBlock* a, MemoryBlock* b);
+static void* next_byte(MemoryBlock* block);
+static MemoryBlock* expand_back_to(MemoryBlock* block, void* new_start);
+static void combine_b_into_a(MemoryBlock* a, MemoryBlock* b);
+static void* last_byte();
+static int byte_index(void* ptr);
+static void* create_memory_block_after(MemoryBlock* block, size_t size);
 
 unsigned char memory_pool[MEMORY_POOL_SIZE];
 MemoryBlock* free_list = NULL;
@@ -45,16 +45,8 @@ void* cool_malloc(size_t size) {
         // If there is space for a memory block
         size_t space_between_current_and_next = space_between_blocks(current, current->next);
         if (space_between_current_and_next > sizeof(MemoryBlock)) {
-          // Create a new free memory block
-
-          // Refactor using this after tests pass
-          // create_memory_block_after(block);
-          MemoryBlock* next_block = next_byte(current);
-          next_block->next = current->next;
-          next_block->prev = current;
-          next_block->size = space_between_current_and_next - sizeof(MemoryBlock);
-          next_block->is_free = 1;
-          current->next = next_block;
+          size_t new_block_size = space_between_current_and_next - sizeof(MemoryBlock);
+          create_memory_block_after(current, new_block_size);
         }
 
         return (void*)(current + 1);
@@ -105,16 +97,11 @@ void* cool_realloc(void* ptr, size_t size) {
 }
 
 // HELPER FUNCTIONS
-// Might not be using this one
-void* first_byte() {
-  return (void*)free_list;
+static int byte_index(void* ptr) {
+  return (char*)ptr - (char*)free_list;
 }
 
-int byte_index(void* ptr) {
-  return (char*)ptr - (char*)first_byte();
-}
-
-void* last_byte() {
+static void* last_byte() {
   return (void*)((char*)free_list + MEMORY_POOL_SIZE);
 }
 
@@ -144,8 +131,7 @@ size_t true_size(MemoryBlock* block) {
   return block->size + sizeof(MemoryBlock);
 }
 
-// expand_back_to
-MemoryBlock* expand_back_to(MemoryBlock* block, void* new_start) {
+static MemoryBlock* expand_back_to(MemoryBlock* block, void* new_start) {
   size_t move_back = space_between_blocks(new_start, block);
   size_t new_size = block->size + move_back;
 
@@ -156,12 +142,12 @@ MemoryBlock* expand_back_to(MemoryBlock* block, void* new_start) {
 }
 
 // combine_b_into_a
-void combine_b_into_a(MemoryBlock* block_a, MemoryBlock* block_b) { 
+static void combine_b_into_a(MemoryBlock* block_a, MemoryBlock* block_b) { 
   block_a->next = block_b->next;
   block_a->size += true_size(block_b);
 }
 
-MemoryBlock* combine_surrounding_space(MemoryBlock* block) {
+static MemoryBlock* combine_surrounding_space(MemoryBlock* block) {
   // Expand block forward if there is space
   if (block->prev && space_between_blocks(block->prev, block)) {
     block = expand_back_to(block, next_byte(block->prev));
@@ -180,5 +166,15 @@ MemoryBlock* combine_surrounding_space(MemoryBlock* block) {
   }
 
   return block;
+}
+
+static void* create_memory_block_after(MemoryBlock* block, size_t size) {
+  MemoryBlock* next_block = next_byte(block);
+  next_block->next = block->next;
+  next_block->prev = block;
+  next_block->size = size;
+  next_block->is_free = 1;
+  block->next = next_block;
+  return NULL;
 }
 
