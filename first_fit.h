@@ -10,11 +10,10 @@ typedef struct MemoryBlock {
     struct MemoryBlock* prev;
 } MemoryBlock;
 
-
 void* initialize_memory_pool();
 void* free_memory_pool();
 void* cool_malloc(size_t size);
 void* cool_free(void* ptr);
 void* cool_realloc(void* ptr, size_t size);
 
-#endif
+#endif // FIRST_FIT_H
