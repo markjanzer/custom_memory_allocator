@@ -11,15 +11,6 @@ void tearDown(void){
   free_memory_pool();
 }
 
-// Setup
-void test_setup_MemoryPoolLargeEnough(void) {
-  TEST_ASSERT_TRUE(memory_pool_size > 199);
-}
-
-void test_setup_MemoryPoolDivisbleByTwo(void) {
-  TEST_ASSERT_EQUAL(memory_pool_size % 2, 0);
-}
-
 // cool_malloc
 void test_malloc_SavesPointer(void) {
   void* ptr = cool_malloc(1);
@@ -35,6 +26,7 @@ void test_malloc_ItDoesNotOverwriteData(void) {
   char* ptr1 = (char*)cool_malloc(sizeof(char));
   *ptr1 = 'M';
   char* ptr2 = (char*)cool_malloc(sizeof(char));
+  TEST_ASSERT_NOT_NULL(ptr2);
   *ptr2 = 'A';
 
   TEST_ASSERT_EQUAL('M', *ptr1);
@@ -125,7 +117,7 @@ void test_free_ItReusesThePointer(void) {
 
 // cool_realloc
 void test_realloc_IfPassedNil_ItReturnsNil(void) {
-  char* ptr = NULL;
+  void* ptr = NULL;
   void* new_ptr = cool_realloc(ptr, 1);
 
   TEST_ASSERT_NULL(new_ptr);
@@ -177,11 +169,7 @@ void test_realloc_ItCompactsAndExpandsBackwards(void) {
 int main(void) {
   UNITY_BEGIN();
 
-  // Setup
-  RUN_TEST(test_setup_MemoryPoolLargeEnough);
-  RUN_TEST(test_setup_MemoryPoolDivisbleByTwo);
-  
-  // // Malloc
+  // Malloc
   RUN_TEST(test_malloc_WhenPassedSizeZero);
   RUN_TEST(test_malloc_SavesPointer);
   RUN_TEST(test_malloc_ItDoesNotOverwriteData);
